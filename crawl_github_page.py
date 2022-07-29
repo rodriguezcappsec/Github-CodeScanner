@@ -9,6 +9,7 @@ from urllib.parse import urljoin
 all_files = []
 all_main_directories = []
 TARGET = "https://github.com/"
+RAW_CONTENT = "https://raw.githubusercontent.com/"
 headers = ""
 
 
@@ -28,7 +29,7 @@ def get_main_repo_trees_blobs(username, reponame, tree):
                 if "/tree/" in link and "/node_modules" not in link:
                     all_main_directories.append(urljoin(TARGET, link).replace("\r\n\t", "").strip())
                 if "/blob/" in link:
-                    all_files.append(urljoin(TARGET, link).replace("\r\n\t", "").strip())
+                    all_files.append(urljoin(RAW_CONTENT, link).replace("/blob/", "/").replace("\r\n\t", "").strip())
         else:
             page.raise_for_status()
     except requests.exceptions.HTTPError as e:
@@ -46,12 +47,14 @@ def recursive_file_discovery(folder_array):
             if page.status_code == 200:
                 soup = BeautifulSoup(page.text, "html.parser")
                 main_container = soup.find("div", {"aria-labelledby": "files"})
-                for a in main_container.findChildren("a", {"data-pjax": "#repo-content-pjax-container"}):
+                for a in main_container.find_all("a", {"data-pjax": "#repo-content-pjax-container"}):
                     link = str(a.get("href"))
                     if "/tree/" in link and "/node_modules" not in link:
                         recursive_file_discovery([urljoin(TARGET, link).replace("\r\n\t", "").strip()])
                     if "/blob/" in link:
-                        all_files.append(urljoin(TARGET, link).replace("\r\n\t", "").strip())
+                        all_files.append(
+                            urljoin(RAW_CONTENT, link).replace("/blob/", "/").replace("\r\n\t", "").strip()
+                        )
 
             else:
                 page.raise_for_status()
