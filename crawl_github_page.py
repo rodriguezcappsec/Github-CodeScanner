@@ -1,10 +1,8 @@
-from pickle import TRUE
 from bs4 import BeautifulSoup
-import re
 import requests
 import click
 from urllib.parse import urljoin
-
+import scanners
 
 all_files = []
 all_main_directories = []
@@ -29,6 +27,9 @@ def get_main_repo_trees_blobs(username, reponame, tree):
                 if "/tree/" in link and "/node_modules" not in link:
                     all_main_directories.append(urljoin(TARGET, link).replace("\r\n\t", "").strip())
                 if "/blob/" in link:
+                    """
+                    Scan here boi...
+                    """
                     all_files.append(urljoin(RAW_CONTENT, link).replace("/blob/", "/").replace("\r\n\t", "").strip())
         else:
             page.raise_for_status()
@@ -37,7 +38,14 @@ def get_main_repo_trees_blobs(username, reponame, tree):
     except requests.exceptions.ConnectionError as ce:
         print("Error Connecting:", ce)
     recursive_file_discovery(all_main_directories)
-    print(all_files)
+    fetch_files(all_files)
+
+
+def fetch_files(files_array):
+    for file in files_array:
+        data = requests.get(file, headers=headers if headers != None else "")
+        print(data.text)
+        break
 
 
 def recursive_file_discovery(folder_array):
@@ -47,15 +55,17 @@ def recursive_file_discovery(folder_array):
             if page.status_code == 200:
                 soup = BeautifulSoup(page.text, "html.parser")
                 main_container = soup.find("div", {"aria-labelledby": "files"})
-                for a in main_container.find_all("a", {"data-pjax": "#repo-content-pjax-container"}):
+                for a in main_container.findChildren("a", {"data-pjax": "#repo-content-pjax-container"}):
                     link = str(a.get("href"))
                     if "/tree/" in link and "/node_modules" not in link:
                         recursive_file_discovery([urljoin(TARGET, link).replace("\r\n\t", "").strip()])
                     if "/blob/" in link:
+                        """
+                        Scan here boi...
+                        """
                         all_files.append(
                             urljoin(RAW_CONTENT, link).replace("/blob/", "/").replace("\r\n\t", "").strip()
                         )
-
             else:
                 page.raise_for_status()
     except requests.exceptions.HTTPError as e:
