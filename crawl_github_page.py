@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import click
 from urllib.parse import urljoin
-import scanners
+import license_scanner
 
 all_files = []
 all_main_directories = []
@@ -14,7 +14,6 @@ headers = ""
 @click.command()
 @click.option("--username", required=True, type=str, help="repository username owner")
 @click.option("--reponame", required=True, type=str, help="name of the repository")
-
 def get_main_repo_trees_blobs(username, reponame):
     tar = f"{TARGET}{username}/{reponame}"
     click.echo(f"Crawling github repo {click.style(tar, fg='green')}... \n\n")
@@ -39,14 +38,14 @@ def get_main_repo_trees_blobs(username, reponame):
     except requests.exceptions.ConnectionError as ce:
         print("Error Connecting:", ce)
     recursive_file_discovery(all_main_directories)
-    print(all_files)
     fetch_files(all_files)
 
 
 def fetch_files(files_array):
     for index, file in enumerate(files_array):
         data = requests.get(file, headers=headers if headers != None else "")
-        # print(data.text) // content of files here.
+        click.echo(f"Getting file: {click.style(file, fg='green')}... \n\n")
+        # print(data.text) // getting 1 file only while testing
         break
 
 
