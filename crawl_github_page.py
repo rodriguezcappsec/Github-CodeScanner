@@ -14,9 +14,10 @@ headers = ""
 @click.command()
 @click.option("--username", required=True, type=str, help="repository username owner")
 @click.option("--reponame", required=True, type=str, help="name of the repository")
-@click.option("--tree", required=False, type=str, help="don't use it... is for recursive shit...")
-def get_main_repo_trees_blobs(username, reponame, tree):
-    click.echo(f"Crawling github repo {click.style(TARGET, fg='green')}... \n\n")
+
+def get_main_repo_trees_blobs(username, reponame):
+    tar = f"{TARGET}{username}/{reponame}"
+    click.echo(f"Crawling github repo {click.style(tar, fg='green')}... \n\n")
     try:
         page = requests.get(f"{TARGET}{username}/{reponame}", headers=headers if headers != None else "")
         if page.status_code == 200:
@@ -38,13 +39,14 @@ def get_main_repo_trees_blobs(username, reponame, tree):
     except requests.exceptions.ConnectionError as ce:
         print("Error Connecting:", ce)
     recursive_file_discovery(all_main_directories)
+    print(all_files)
     fetch_files(all_files)
 
 
 def fetch_files(files_array):
-    for file in files_array:
+    for index, file in enumerate(files_array):
         data = requests.get(file, headers=headers if headers != None else "")
-        print(data.text)
+        # print(data.text) // content of files here.
         break
 
 
